@@ -210,8 +210,15 @@ bypass_orig_flow:
 	if (rc)
 		audit_log_format(ab, " tsid=%d", tsid);
 	else {
-		audit_log_format(ab, " tcontext=%s", scontext);
-		kfree(scontext);
+#ifdef CONFIG_KSU_SUSFS
+	 if (likely(susfs_is_avc_log_spoofing_enabled) && unlikely(strstr(scontext, ":su:"))) {
+			audit_log_format(ab, " tcontext=u:r:priv_app:s0:c512,c768");
+		} else 
+#endif
+		{
+			audit_log_format(ab, " tcontext=%s", scontext);
+			kfree(scontext);
+		}
 	}
 
 	BUG_ON(!tclass || tclass >= ARRAY_SIZE(secclass_map));
